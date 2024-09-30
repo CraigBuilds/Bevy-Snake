@@ -139,7 +139,7 @@ fn spawn_food_system(
     mut cmds: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut food_query: Query<&Food>,
+    food_query: Query<&Food>,
 ) {
     if food_query.iter().count() == 0 {
         let x = (rand::random::<f32>() * 20.0 - 10.0) * GRID_CELL_SIZE;
