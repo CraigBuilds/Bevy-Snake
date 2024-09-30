@@ -5,7 +5,7 @@ use std::{collections::LinkedList, ops::DerefMut};
 
 const GRID_CELL_SIZE: f32 = 10.0;
 const SEGMENT_SIZE: f32 = 6.0;
-const TIME_STEP: f32 = 0.5;
+const TIME_STEP: f32 = 0.1;
 
 fn main() {
     App::new()
@@ -58,6 +58,7 @@ fn setup(
     cmds.spawn(Camera2dBundle::default());
 }
 
+
 /// Not a system, just a helper function to add a segment to the snake
 fn spawn_segment(
     cmds: &mut Commands,
@@ -65,6 +66,11 @@ fn spawn_segment(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ){
+
+    //TODO only create the assets once and pass around the handles as a resource
+    let mesh = Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE)));
+    let material = materials.add(Color::srgb(0.0, 1.0, 0.0));
+
     let head_clone = snake_state.head;
     snake_state.body.push_front(head_clone);
     let idx = snake_state.body.len();
@@ -72,8 +78,8 @@ fn spawn_segment(
         (
             SnakeSegment(idx),
             MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
-                material: materials.add(Color::srgb(0.0, 1.0, 0.0)),
+                mesh: mesh,
+                material: material,
                 // Hidden and with default transform.
                 // The render system will use the SnakeSegment index and SnakeState to set the transform and visibility
                 visibility: Visibility::Hidden,
@@ -169,11 +175,16 @@ fn food_collision_system(
     mut cmds: Commands,
     food_query: Query<(Entity, &Transform), With<Food>>,
     snake_query: Query<&Transform, With<SnakeSegment>>,
+    mut snake_state: ResMut<SnakeState>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+
 ) {
     if let Ok((food_id, food_pos)) = food_query.get_single() {
         for snake_pos in snake_query.iter() {
             if food_pos.translation == snake_pos.translation {
                 cmds.entity(food_id).despawn();
+                spawn_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
             }
         }
     }
