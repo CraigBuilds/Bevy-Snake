@@ -72,8 +72,9 @@ fn spawn_segment(
     let mesh = Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE)));
     let material = materials.add(Color::srgb(0.0, 1.0, 0.0));
 
-    let head_clone = snake_state.head;
-    snake_state.body.push_front(head_clone);
+    let old_tail = snake_state.body.back().unwrap_or(&snake_state.head).clone();
+    snake_state.body.push_back(old_tail);
+    
     let idx = snake_state.body.len();
     cmds.spawn(
         (
@@ -192,7 +193,6 @@ fn food_collision_system(
 }
 
 // If the snake collides with itself, print a message.
-//TODO: Fix erroneous collision when the snake grows
 fn self_collision_system(
     snake_state: Res<SnakeState>,
 ) {
