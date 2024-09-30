@@ -148,7 +148,7 @@ fn spawn_food_system(
             (
                 Food,
                 MaterialMesh2dBundle {
-                    mesh: Mesh2dHandle(meshes.add(Rectangle::new(GRID_CELL_SIZE, GRID_CELL_SIZE))),
+                    mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
                     material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
                     transform: Transform::from_translation(Vec3::new(x, y, 0.0)),
                     ..Default::default()
