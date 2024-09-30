@@ -62,8 +62,8 @@ fn add_segment(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ){
-    let old_head = snake_state.head;
-    snake_state.body.push_front(old_head);
+    let head_clone = snake_state.head;
+    snake_state.body.push_front(head_clone);
     let idx = snake_state.body.len();
     cmds.spawn(
         (
