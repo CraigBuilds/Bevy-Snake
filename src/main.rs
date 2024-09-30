@@ -15,7 +15,7 @@ fn main() {
         .add_systems(PreUpdate, direction_control_system)
         .add_systems(Update,
             (
-                spawn_food_system,
+                food_spawning_system,
                 food_collision_system
             )
         )
@@ -147,7 +147,7 @@ fn render_system(snake_state: Res<SnakeState>, mut segment_q: Query<(&mut Transf
 struct Food;
 
 /// If there is no food, spawn one
-fn spawn_food_system(
+fn food_spawning_system(
     mut cmds: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
