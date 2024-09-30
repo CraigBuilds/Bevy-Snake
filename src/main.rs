@@ -1,5 +1,6 @@
 use bevy::{
-    prelude::*, sprite::{MaterialMesh2dBundle, Mesh2dHandle}
+    prelude::*,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 use std::{collections::LinkedList, ops::DerefMut};
 
@@ -13,18 +14,17 @@ fn main() {
         .insert_resource(SnakeState::default())
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, direction_control_system)
-        .add_systems(FixedUpdate,
+        .add_systems(
+            FixedUpdate,
             (
                 food_spawning_system,
                 food_collision_system,
-                self_collision_system
-            )
+                self_collision_system,
+            ),
         )
-        .add_systems(PostUpdate, 
-            (
-                movement_and_segment_propagation_system,
-                render_system
-            ).chain()
+        .add_systems(
+            PostUpdate,
+            (movement_and_segment_propagation_system, render_system).chain(),
         )
         .run();
 }
@@ -32,7 +32,7 @@ fn main() {
 /// Stores the current direction, and grid coordinates of the snake's head and body segments
 /// This is instead of maintaining parent child relationships between segment coordinates
 #[derive(Resource, Default)]
-struct SnakeState{
+struct SnakeState {
     head: Vec2,
     body: LinkedList<Vec2>,
     dir: Vec2,
@@ -47,18 +47,21 @@ fn setup(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut snake_state: ResMut<SnakeState>
-)
-{
+    mut snake_state: ResMut<SnakeState>,
+) {
     snake_state.dir = Vec2::new(GRID_CELL_SIZE, 0.0);
 
     for _ in 0..6 {
-        spawn_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
+        spawn_segment(
+            &mut cmds,
+            snake_state.deref_mut(),
+            &mut meshes,
+            &mut materials,
+        );
     }
 
     cmds.spawn(Camera2dBundle::default());
 }
-
 
 /// Not a system, just a helper function to add a segment to the snake
 fn spawn_segment(
@@ -66,31 +69,27 @@ fn spawn_segment(
     snake_state: &mut SnakeState,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-){
-
+) {
     //TODO only create the assets once and pass around the handles as a resource
     let mesh = Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE)));
     let material = materials.add(Color::srgb(0.0, 1.0, 0.0));
 
     let old_tail = snake_state.body.back().unwrap_or(&snake_state.head).clone();
     snake_state.body.push_back(old_tail);
-    
-    let idx = snake_state.body.len();
-    cmds.spawn(
-        (
-            SnakeSegment(idx),
-            MaterialMesh2dBundle {
-                mesh: mesh,
-                material: material,
-                // Hidden and with default transform.
-                // The render system will use the SnakeSegment index and SnakeState to set the transform and visibility
-                visibility: Visibility::Hidden,
-                ..Default::default()
-            }
-        )
-    );
-}
 
+    let idx = snake_state.body.len();
+    cmds.spawn((
+        SnakeSegment(idx),
+        MaterialMesh2dBundle {
+            mesh: mesh,
+            material: material,
+            // Hidden and with default transform.
+            // The render system will use the SnakeSegment index and SnakeState to set the transform and visibility
+            visibility: Visibility::Hidden,
+            ..Default::default()
+        },
+    ));
+}
 
 /// System to handle keyboard input and change the direction of the snake
 fn direction_control_system(
@@ -114,10 +113,13 @@ fn direction_control_system(
 }
 
 /// System to move the snake (using SnakeState) and propagate the segments
-fn movement_and_segment_propagation_system(mut snake_state: ResMut<SnakeState>, time: Res<Time>, mut timer: Local<Timer>) {
+fn movement_and_segment_propagation_system(
+    mut snake_state: ResMut<SnakeState>,
+    time: Res<Time>,
+    mut timer: Local<Timer>,
+) {
     timer.tick(time.delta());
     if timer.finished() {
-    
         let snake = snake_state.deref_mut();
         let snake_dir = snake.dir;
         let old_head = snake.head;
@@ -132,13 +134,16 @@ fn movement_and_segment_propagation_system(mut snake_state: ResMut<SnakeState>, 
 }
 
 /// System to render the snake using the snake state to set the position of the segments
-fn render_system(snake_state: Res<SnakeState>, mut segment_q: Query<(&mut Transform, &mut Visibility, &SnakeSegment)>) {
+fn render_system(
+    snake_state: Res<SnakeState>,
+    mut segment_q: Query<(&mut Transform, &mut Visibility, &SnakeSegment)>,
+) {
     for (mut segment_transform, mut segment_vis, segment_index) in segment_q.iter_mut() {
         if segment_index.0 == 0 {
             segment_transform.translation = snake_state.head.extend(0.0);
             *segment_vis = Visibility::Visible;
         } else {
-            let segment = snake_state.body.iter().nth(segment_index.0 -1).unwrap();
+            let segment = snake_state.body.iter().nth(segment_index.0 - 1).unwrap();
             segment_transform.translation = segment.extend(0.0);
             *segment_vis = Visibility::Visible;
         }
@@ -158,17 +163,15 @@ fn food_spawning_system(
     if food_query.iter().count() == 0 {
         let x = (rand::random::<i32>() % 20) * 10;
         let y = (rand::random::<i32>() % 20) * 10;
-        cmds.spawn(
-            (
-                Food,
-                MaterialMesh2dBundle {
-                    mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
-                    material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                    transform: Transform::from_translation(Vec3::new(x as f32, y as f32, 0.0)),
-                    ..Default::default()
-                }
-            )
-        );
+        cmds.spawn((
+            Food,
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
+                material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
+                transform: Transform::from_translation(Vec3::new(x as f32, y as f32, 0.0)),
+                ..Default::default()
+            },
+        ));
     }
 }
 
@@ -180,22 +183,24 @@ fn food_collision_system(
     mut snake_state: ResMut<SnakeState>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-
 ) {
     if let Ok((food_id, food_pos)) = food_query.get_single() {
         for snake_pos in snake_query.iter() {
             if food_pos.translation == snake_pos.translation {
                 cmds.entity(food_id).despawn();
-                spawn_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
+                spawn_segment(
+                    &mut cmds,
+                    snake_state.deref_mut(),
+                    &mut meshes,
+                    &mut materials,
+                );
             }
         }
     }
 }
 
 // If the snake collides with itself, print a message.
-fn self_collision_system(
-    snake_state: Res<SnakeState>,
-) {
+fn self_collision_system(snake_state: Res<SnakeState>) {
     let head = snake_state.head;
     for segment in snake_state.body.iter() {
         if head == *segment {
