@@ -13,10 +13,11 @@ fn main() {
         .insert_resource(SnakeState::default())
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, direction_control_system)
-        .add_systems(Update,
+        .add_systems(FixedUpdate,
             (
                 food_spawning_system,
-                food_collision_system
+                food_collision_system,
+                self_collision_system
             )
         )
         .add_systems(PostUpdate, 
@@ -186,6 +187,19 @@ fn food_collision_system(
                 cmds.entity(food_id).despawn();
                 spawn_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
             }
+        }
+    }
+}
+
+// If the snake collides with itself, print a message.
+//TODO: Fix erroneous collision when the snake grows
+fn self_collision_system(
+    snake_state: Res<SnakeState>,
+) {
+    let head = snake_state.head;
+    for segment in snake_state.body.iter() {
+        if head == *segment {
+            println!("Game Over!");
         }
     }
 }
