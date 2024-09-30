@@ -16,6 +16,7 @@ fn main() {
         .add_systems(Update,
             (
                 spawn_food_system,
+                food_collision_system
             )
         )
         .add_systems(PostUpdate, 
@@ -160,5 +161,20 @@ fn spawn_food_system(
                 }
             )
         );
+    }
+}
+
+/// If the snake head is on the food, despawn the food and add a segment to the snake
+fn food_collision_system(
+    mut cmds: Commands,
+    food_query: Query<(Entity, &Transform), With<Food>>,
+    snake_query: Query<&Transform, With<SnakeSegment>>,
+) {
+    if let Ok((food_id, food_pos)) = food_query.get_single() {
+        for snake_pos in snake_query.iter() {
+            if food_pos.translation == snake_pos.translation {
+                cmds.entity(food_id).despawn();
+            }
+        }
     }
 }
