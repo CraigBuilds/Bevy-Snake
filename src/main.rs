@@ -27,7 +27,8 @@ fn main() {
         .run();
 }
 
-/// Stores the current direction, and grid coordinates of the snake's head and body segments 
+/// Stores the current direction, and grid coordinates of the snake's head and body segments
+/// This is instead of maintaining parent child relationships between segment coordinates
 #[derive(Resource, Default)]
 struct SnakeState{
     head: Vec2,
@@ -50,14 +51,14 @@ fn setup(
     snake_state.dir = Vec2::new(GRID_CELL_SIZE, 0.0);
 
     for _ in 0..6 {
-        add_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
+        spawn_segment(&mut cmds, snake_state.deref_mut(), &mut meshes, &mut materials);
     }
 
     cmds.spawn(Camera2dBundle::default());
 }
 
 /// Not a system, just a helper function to add a segment to the snake
-fn add_segment(
+fn spawn_segment(
     cmds: &mut Commands,
     snake_state: &mut SnakeState,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -72,6 +73,8 @@ fn add_segment(
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
                 material: materials.add(Color::srgb(0.0, 1.0, 0.0)),
+                // Hidden and with default transform.
+                // The render system will use the SnakeSegment index and SnakeState to set the transform and visibility
                 visibility: Visibility::Hidden,
                 ..Default::default()
             }
@@ -144,15 +147,15 @@ fn spawn_food_system(
     food_query: Query<&Food>,
 ) {
     if food_query.iter().count() == 0 {
-        let x = (rand::random::<f32>() * 20.0 - 10.0) * GRID_CELL_SIZE;
-        let y = (rand::random::<f32>() * 20.0 - 10.0) * GRID_CELL_SIZE;
+        let x = (rand::random::<i32>() % 20) * 10;
+        let y = (rand::random::<i32>() % 20) * 10;
         cmds.spawn(
             (
                 Food,
                 MaterialMesh2dBundle {
                     mesh: Mesh2dHandle(meshes.add(Rectangle::new(SEGMENT_SIZE, SEGMENT_SIZE))),
                     material: materials.add(Color::srgb(1.0, 0.0, 0.0)),
-                    transform: Transform::from_translation(Vec3::new(x, y, 0.0)),
+                    transform: Transform::from_translation(Vec3::new(x as f32, y as f32, 0.0)),
                     ..Default::default()
                 }
             )
