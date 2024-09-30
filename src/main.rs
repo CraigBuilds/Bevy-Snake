@@ -27,7 +27,7 @@ fn main() {
         .run();
 }
 
-
+/// Stores the current direction, and grid coordinates of the snake's head and body segments 
 #[derive(Resource, Default)]
 struct SnakeState{
     head: Vec2,
@@ -35,6 +35,7 @@ struct SnakeState{
     dir: Vec2,
 }
 
+/// Component to identify a snake segment by its index in the head/body list
 #[derive(Component)]
 struct SnakeSegment(usize);
 
@@ -134,6 +135,7 @@ fn render_system(snake_state: Res<SnakeState>, mut segment_q: Query<(&mut Transf
 
 #[derive(Component, Default)]
 struct Food;
+
 /// If there is no food, spawn one
 fn spawn_food_system(
     mut cmds: Commands,
